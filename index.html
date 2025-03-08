@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="icon.png">
+</head>
+<body>
+  <script>
+    if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+  </script>
+  Hello.
+</body>
+</html>
