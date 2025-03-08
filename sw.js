@@ -1,1 +1,1 @@
-self.addEventListener('fetch',e=>{});
+// This file intentionally empty
