@@ -27,19 +27,58 @@
         // Show your custom install button
     });
 
-    const manifest = {
-      name: 'DynApp ' + document.location.hash,
-      short_name: 'DynApp ' + document.location.hash,
-      display: 'standalone',
-      theme_color: '#B3BBBF',
-      background_color: '#263238',
-      start_url: window.location.href
+    // convert SVG icon to PNG for platforms that don't support SVG
+    const svgIconLink = document.querySelector('link[rel="icon"]');
+    const svgDataUrl = svgIconLink.href;
+    console.log("svgDataUrl", svgDataUrl);
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const size = 192;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, size, size);
+      const pngDataUrl = canvas.toDataURL('image/png');
+      console.log(img);
+      console.log(pngDataUrl);
+
+      const iconLink = document.querySelector('link[rel="icon"]');
+      iconLink.href = pngDataUrl;
+      iconLink.type = 'image/png';
+      iconLink.setAttribute('sizes', `${size}x${size}`);
+
+      console.log("iconLink", iconLink);
+
+      const appleIconLink = document.querySelector('link[rel="apple-touch-icon"]');
+      appleIconLink.href = pngDataUrl;
+      appleIconLink.type = 'image/png';
+
+      console.log("appleIconLink", appleIconLink);
+      // dynamically create manifest
+      const manifest = {
+        name: 'DynApp ' + document.location.hash,
+        short_name: 'DynApp ' + document.location.hash,
+        display: 'standalone',
+        theme_color: '#B3BBBF',
+        background_color: '#263238',
+        start_url: window.location.href,
+        icons: [{
+          src: pngDataUrl,
+          sizes: `${size}x${size}`,
+          type: 'image/png'
+        }]
+      };
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      const b64manifest = btoa(JSON.stringify(manifest));
+      link.href = "data:application/json;base64," + b64manifest;
+      document.head.appendChild(link);
+
+      // display the entered location hash
+      document.getElementById("display").textContent = document.location.hash;
     };
-    const link = document.createElement('link');
-    link.rel = 'manifest';
-    link.href = `data:application/json;base64,${btoa(JSON.stringify(manifest))}`;
-    document.head.appendChild(link);
-    document.getElementById("display").textContent = document.location.hash;
+    img.src = svgDataUrl;
   </script>
 </body>
 </html>
