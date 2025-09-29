@@ -1,0 +1,5 @@
+.*.swp
+.aider*
+.envrc
+workspace
+node_modules
