@@ -53,3 +53,63 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // If a window is already open, focus it
+        for (const client of clientList) {
+          if ('focus' in client) {
+            return client.focus();
+          }
+        }
+        // Otherwise, open a new window
+        if (clients.openWindow) {
+          return clients.openWindow('./');
+        }
+      })
+  );
+});
+
+// Handle periodic background sync for notifications
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'countdown-reminder') {
+    event.waitUntil(showCountdownNotification());
+  }
+});
+
+// Manual message-based notification trigger (fallback for browsers without periodic sync)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SCHEDULE_NOTIFICATION') {
+    scheduleNotification(event.data.delay);
+  }
+});
+
+async function showCountdownNotification() {
+  try {
+    // Get event data from IndexedDB or use message passing
+    const title = 'Countdown Reminder';
+    const options = {
+      body: 'Check your countdown progress!',
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+      tag: 'countdown-reminder',
+      requireInteraction: false,
+      vibrate: [200, 100, 200]
+    };
+    
+    await self.registration.showNotification(title, options);
+  } catch (error) {
+    console.error('Error showing notification:', error);
+  }
+}
+
+function scheduleNotification(delay) {
+  // Use setTimeout for immediate scheduling
+  setTimeout(() => {
+    showCountdownNotification();
+  }, delay);
+}
