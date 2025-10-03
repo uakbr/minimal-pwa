@@ -1,20 +1,662 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+  <meta name="description" content="A beautiful forever countdown you can install as a PWA.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#5b63ff">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon.png">
-  <link rel="apple-touch-icon" href="icon.png">
-  <title>MinPWA</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml" sizes="any">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>Days Until Forever</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-gradient: radial-gradient(120% 120% at 10% 20%, #6670ff 0%, rgba(102, 112, 255, 0) 55%),
+        radial-gradient(100% 100% at 80% 0%, #ff7bbf 0%, rgba(255, 123, 191, 0) 60%),
+        radial-gradient(80% 80% at 30% 80%, #3fc5ff 0%, rgba(63, 197, 255, 0) 70%),
+        #111222;
+      --glass: rgba(15, 18, 38, 0.45);
+      --glass-border: rgba(255, 255, 255, 0.16);
+      --text-primary: #fdfcff;
+      --text-secondary: rgba(255, 255, 255, 0.72);
+      --text-muted: rgba(255, 255, 255, 0.56);
+      --accent: #8b95ff;
+      --shadow: 0 24px 60px rgba(10, 8, 45, 0.45);
+      --card-radius: 28px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-gradient: linear-gradient(145deg, #f1f3ff 0%, #dbe5ff 50%, #f4deff 100%);
+        --glass: rgba(255, 255, 255, 0.82);
+        --glass-border: rgba(108, 114, 182, 0.2);
+        --text-primary: #0e1330;
+        --text-secondary: rgba(8, 12, 54, 0.75);
+        --text-muted: rgba(8, 12, 54, 0.58);
+        --accent: #5b63ff;
+        --shadow: 0 18px 50px rgba(68, 86, 254, 0.2);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.25rem;
+      background: var(--bg-gradient);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    main {
+      width: min(720px, 100%);
+      background: var(--glass);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: clamp(2rem, 5vw, 3rem);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    header h1 {
+      font-size: clamp(2.35rem, 5vw, 3.35rem);
+      margin: 0.75rem 0 1.5rem;
+      line-height: 1.1;
+      font-weight: 700;
+    }
+
+    header h1 span {
+      color: var(--accent);
+    }
+
+    .countdown {
+      display: grid;
+      gap: 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .countdown-hero {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-number {
+      font-size: clamp(4.5rem, 11vw, 7.5rem);
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+    }
+
+    .hero-label {
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      font-size: 1rem;
+      color: var(--text-secondary);
+    }
+
+    .units {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 1rem;
+    }
+
+    .unit {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 1rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .unit .value {
+      font-size: clamp(2rem, 6vw, 2.8rem);
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .unit .label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+    }
+
+    .details {
+      display: grid;
+      gap: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .details strong {
+      color: var(--text-primary);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 2.5rem;
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      padding: 0.85rem 1.6rem;
+      font-size: 1rem;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.16);
+      color: var(--text-primary);
+      transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 14px 30px rgba(9, 13, 53, 0.25);
+    }
+
+    button:hover,
+    button:focus-visible {
+      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.25);
+      outline: none;
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .button-primary {
+      background: linear-gradient(135deg, #7e86ff, #9c74ff);
+      box-shadow: 0 16px 35px rgba(88, 97, 255, 0.35);
+    }
+
+    .button-ghost {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: none;
+    }
+
+    .button-ghost.hidden {
+      display: none;
+    }
+
+    .live-region {
+      margin-top: 1.5rem;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    dialog::backdrop {
+      background: rgba(7, 7, 15, 0.55);
+      backdrop-filter: blur(6px);
+    }
+
+    dialog {
+      border: 1px solid var(--glass-border);
+      border-radius: 22px;
+      padding: 2rem;
+      max-width: 360px;
+      width: calc(100% - 2.5rem);
+      background: rgba(10, 12, 28, 0.9);
+      color: var(--text-primary);
+      box-shadow: var(--shadow);
+    }
+
+    form {
+      display: grid;
+      gap: 1rem;
+    }
+
+    label {
+      display: grid;
+      gap: 0.4rem;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    input,
+    textarea {
+      font: inherit;
+      padding: 0.75rem 1rem;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(5, 7, 20, 0.65);
+      color: var(--text-primary);
+      outline: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input:focus-visible,
+    textarea:focus-visible {
+      border-color: rgba(123, 135, 255, 0.85);
+      box-shadow: 0 0 0 4px rgba(123, 135, 255, 0.2);
+    }
+
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .dialog-actions {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
+    }
+
+    .muted {
+      color: var(--text-muted);
+    }
+
+    .countdown-ended {
+      color: #72ffcf;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 2rem 1rem;
+      }
+
+      main {
+        padding: 2rem 1.5rem;
+      }
+
+      .actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
+  <main>
+    <header>
+      <div class="badge">Counting down to</div>
+      <h1>Days Until <span id="event-title">Forever</span></h1>
+    </header>
+
+    <section class="countdown" aria-label="Countdown">
+      <div class="countdown-hero">
+        <span class="hero-number" id="days-value">000</span>
+        <span class="hero-label" id="days-label">days</span>
+      </div>
+      <div class="units">
+        <div class="unit">
+          <span class="value" id="hours-value">00</span>
+          <span class="label">Hours</span>
+        </div>
+        <div class="unit">
+          <span class="value" id="minutes-value">00</span>
+          <span class="label">Minutes</span>
+        </div>
+        <div class="unit">
+          <span class="value" id="seconds-value">00</span>
+          <span class="label">Seconds</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="details" aria-label="Event details">
+      <div><strong id="event-headline">Forever begins in</strong></div>
+      <div id="event-datetime">December 25, 2025 at 12:00 AM</div>
+      <div id="event-location" class="muted">Everywhere</div>
+      <div id="event-note" class="muted">Counting down every moment.</div>
+    </section>
+
+    <div class="actions">
+      <button type="button" class="button-primary" id="edit-button">Customise Countdown</button>
+      <button type="button" id="share-button">Share</button>
+      <button type="button" class="button-ghost hidden" id="install-button">Install App</button>
+    </div>
+
+    <p class="live-region" id="live-region" aria-live="polite"></p>
+  </main>
+
+  <dialog id="edit-dialog">
+    <form id="event-form" method="dialog">
+      <h2 style="margin-top:0">Countdown Details</h2>
+      <label>
+        Title
+        <input id="input-title" name="title" autocomplete="off" required maxlength="60" placeholder="Forever" />
+      </label>
+      <label>
+        Target date &amp; time
+        <input id="input-datetime" name="datetime" type="datetime-local" required />
+      </label>
+      <label>
+        Location (optional)
+        <input id="input-location" name="location" autocomplete="off" maxlength="80" placeholder="Everywhere" />
+      </label>
+      <label>
+        Notes (optional)
+        <textarea id="input-note" name="note" maxlength="160" placeholder="Counting down every moment."></textarea>
+      </label>
+      <div class="dialog-actions">
+        <button type="reset" value="cancel">Cancel</button>
+        <button type="submit" class="button-primary" value="confirm">Save</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
-    if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {
+        // no-op; offline is best effort
+      });
+    }
+
+    const defaultEvent = {
+      title: 'Forever',
+      datetime: '2025-12-25T00:00',
+      location: 'Everywhere',
+      note: 'Counting down every moment.'
+    };
+
+    const selectors = {
+      title: document.getElementById('event-title'),
+      headline: document.getElementById('event-headline'),
+      datetime: document.getElementById('event-datetime'),
+      location: document.getElementById('event-location'),
+      note: document.getElementById('event-note'),
+      days: document.getElementById('days-value'),
+      daysLabel: document.getElementById('days-label'),
+      hours: document.getElementById('hours-value'),
+      minutes: document.getElementById('minutes-value'),
+      seconds: document.getElementById('seconds-value'),
+      liveRegion: document.getElementById('live-region'),
+      installButton: document.getElementById('install-button')
+    };
+
+    const form = document.getElementById('event-form');
+    const editDialog = document.getElementById('edit-dialog');
+    const editButton = document.getElementById('edit-button');
+    const shareButton = document.getElementById('share-button');
+    const installButton = selectors.installButton;
+
+    const storageKey = 'forever-countdown-config';
+
+    function loadEvent() {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return { ...defaultEvent };
+        const parsed = JSON.parse(raw);
+        return { ...defaultEvent, ...parsed };
+      } catch (error) {
+        console.warn('Unable to read saved countdown config, using defaults.', error);
+        return { ...defaultEvent };
+      }
+    }
+
+    function saveEvent(data) {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(data));
+      } catch (error) {
+        console.warn('Unable to persist countdown config.', error);
+      }
+    }
+
+    const state = {
+      ...loadEvent(),
+      timerId: null,
+      targetDate: null
+    };
+
+    function formatDate(isoString) {
+      const date = new Date(isoString);
+      if (Number.isNaN(date.getTime())) {
+        return 'Choose a future moment to begin the countdown.';
+      }
+      const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short'
+      };
+      return new Intl.DateTimeFormat(undefined, options).format(date);
+    }
+
+    function updateTitle(daysRemaining) {
+      const label = daysRemaining <= 0 ? 'Forever is here!' : `${daysRemaining} day${daysRemaining === 1 ? '' : 's'} until ${state.title}`;
+      document.title = label;
+    }
+
+    function updateCountdown() {
+      const now = new Date();
+      const target = new Date(state.datetime);
+
+      if (Number.isNaN(target.getTime())) {
+        selectors.liveRegion.textContent = 'Pick a target date to start your countdown.';
+        return;
+      }
+
+      state.targetDate = target;
+
+      const diff = target.getTime() - now.getTime();
+      const totalSeconds = Math.max(0, Math.floor(diff / 1000));
+
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      const dayString = String(days);
+      const padLength = dayString.length > 2 ? dayString.length : 2;
+      selectors.days.textContent = dayString.padStart(padLength, '0');
+      selectors.daysLabel.textContent = days === 1 ? 'day' : 'days';
+      selectors.hours.textContent = String(hours).padStart(2, '0');
+      selectors.minutes.textContent = String(minutes).padStart(2, '0');
+      selectors.seconds.textContent = String(seconds).padStart(2, '0');
+
+      if (diff <= 0) {
+        selectors.liveRegion.textContent = 'The moment has arrived. Enjoy it.';
+        selectors.days.classList.add('countdown-ended');
+        selectors.headline.textContent = `${state.title} is happening now`;
+      } else {
+        selectors.liveRegion.textContent = `Counting down in ${Intl.DateTimeFormat().resolvedOptions().timeZone}.`;
+        selectors.days.classList.remove('countdown-ended');
+        selectors.headline.textContent = `${state.title} begins in`;
+      }
+
+      updateTitle(days);
+    }
+
+    function startTicker() {
+      if (state.timerId) {
+        clearInterval(state.timerId);
+      }
+      updateCountdown();
+      state.timerId = setInterval(updateCountdown, 1000);
+    }
+
+    function renderEvent() {
+      selectors.title.textContent = state.title;
+      selectors.datetime.textContent = formatDate(state.datetime);
+
+      if (state.location && state.location.trim()) {
+        selectors.location.textContent = state.location.trim();
+        selectors.location.style.display = '';
+      } else {
+        selectors.location.textContent = '';
+        selectors.location.style.display = 'none';
+      }
+
+      if (state.note && state.note.trim()) {
+        selectors.note.textContent = state.note.trim();
+        selectors.note.style.display = '';
+      } else {
+        selectors.note.textContent = '';
+        selectors.note.style.display = 'none';
+      }
+
+      startTicker();
+    }
+
+    function openDialog() {
+      const localDate = new Date(state.datetime);
+      const isoLocal = !Number.isNaN(localDate.getTime())
+        ? new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+        : '';
+
+      form.elements.title.value = state.title;
+      form.elements.datetime.value = isoLocal;
+      form.elements.location.value = state.location || '';
+      form.elements.note.value = state.note || '';
+
+      if (typeof editDialog.showModal === 'function') {
+        editDialog.showModal();
+      } else {
+        editDialog.setAttribute('open', '');
+      }
+    }
+
+    function closeDialog() {
+      if (typeof editDialog.close === 'function') {
+        editDialog.close();
+      } else {
+        editDialog.removeAttribute('open');
+      }
+    }
+
+    editDialog.addEventListener('cancel', (event) => {
+      event.preventDefault();
+      closeDialog();
+    });
+
+    form.addEventListener('reset', (event) => {
+      event.preventDefault();
+      closeDialog();
+    });
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const title = (formData.get('title') || '').toString().trim() || defaultEvent.title;
+      const localDateTime = formData.get('datetime');
+      const location = (formData.get('location') || '').toString().trim();
+      const note = (formData.get('note') || '').toString().trim();
+
+      if (!localDateTime) {
+        selectors.liveRegion.textContent = 'Pick a date to save the countdown.';
+        return;
+      }
+
+      const parsed = new Date(localDateTime);
+      const timezoneOffset = parsed.getTimezoneOffset();
+      const isoUtc = new Date(parsed.getTime() - timezoneOffset * 60000).toISOString().slice(0, 16);
+      const isoForStorage = `${isoUtc}:00`;
+
+      Object.assign(state, {
+        title,
+        datetime: isoForStorage,
+        location,
+        note
+      });
+
+      saveEvent({
+        title: state.title,
+        datetime: state.datetime,
+        location: state.location,
+        note: state.note
+      });
+
+      renderEvent();
+      closeDialog();
+    });
+
+    editButton.addEventListener('click', openDialog);
+
+    shareButton.addEventListener('click', async () => {
+      const formatted = formatDate(state.datetime);
+      const message = `${state.title} is happening ${formatted}. Countdown with me!`;
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `${state.title} countdown`,
+            text: message,
+            url: window.location.href
+          });
+        } catch (error) {
+          if (error?.name !== 'AbortError') {
+            selectors.liveRegion.textContent = 'Unable to open the share sheet on this device.';
+          }
+        }
+      } else {
+        try {
+          await navigator.clipboard.writeText(`${message} ${window.location.href}`);
+          selectors.liveRegion.textContent = 'Link copied to clipboard.';
+        } catch (error) {
+          selectors.liveRegion.textContent = 'Copy this link to share: ' + window.location.href;
+        }
+      }
+    });
+
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      deferredPrompt = event;
+      installButton.classList.remove('hidden');
+    });
+
+    installButton.addEventListener('click', async () => {
+      if (!deferredPrompt) {
+        selectors.liveRegion.textContent = 'Install prompt is not available yet.';
+        return;
+      }
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if (choice.outcome !== 'accepted') {
+        selectors.liveRegion.textContent = 'Install whenever you are ready.';
+      }
+      deferredPrompt = null;
+      installButton.classList.add('hidden');
+    });
+
+    renderEvent();
+
+    window.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        startTicker();
+      }
+    });
   </script>
-  <p>This is MinPWA</p>
-  <p><a href="./single-file-pwa">Single file version</a></p>
 </body>
 </html>
